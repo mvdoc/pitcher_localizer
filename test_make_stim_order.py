@@ -14,7 +14,8 @@ def test_create_run():
     run = create_run(stimuli)
     assert len(run) > 0
     # check we don't touch stimuli
-    assert len(stimuli) > 0
+    for category, stim in stimuli.iteritems():
+        assert len(stim) > 0, category
 
     fixations = len(list(filter(lambda x: x['stim_type'] == 'fixation', run)))
     assert fixations == 3

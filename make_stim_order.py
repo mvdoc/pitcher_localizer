@@ -1,5 +1,6 @@
 """Make stimulus order for localizer"""
 import argparse
+from copy import deepcopy
 import json
 import os
 from os.path import join as pjoin
@@ -66,20 +67,20 @@ def create_run(stimuli):
     categories = sample(stimuli.keys(), len(stimuli))
     phases = ['fixation', categories, 'fixation', categories[::-1], 'fixation']
     # make a copy and shuffle the stimuli
-    stimuli_ = stimuli.copy()
+    stimuli_ = deepcopy(stimuli)
     for stim in stimuli_:
         shuffle(stimuli_[stim])
     run = []
     for ph in phases:
         if ph == 'fixation':
-            run.append(make_trial('fixation', 18, None))
+            run.append(make_trial('fixation', 18., None))
         else:  # we have stimuli
             for cat in ph:
                 # these are the stimuli
                 stims = stimuli_[cat]
                 # we have 6 stimuli in each block
                 for _ in range(6):
-                    run.append(make_trial(cat, 6, stims.pop()))
+                    run.append(make_trial(cat, 3., stims.pop()))
     return run
 
 
