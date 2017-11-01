@@ -108,6 +108,9 @@ def main():
     out_dir = parsed.output
     overwrite = parsed.overwrite
 
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+
     stimuli = get_stimuli(stim_dir)
     exp = create_experiment(stimuli, nruns)
     save_json(exp, pjoin(out_dir, out_fn(subid, nruns)), overwrite)
