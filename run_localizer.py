@@ -232,12 +232,13 @@ for trial in stimuli:
             stim_type=stim_type,
             stim_fn=stim_fn
         ))
-        while tmovie.getTime() > 0 and movie.status != visual.FINISHED:
-            movie.draw()
-            scrwin.flip()
-        # set it to finished just in case, so that the next time should work
-        movie.status = visual.NOT_STARTED
-        movie.seek(0)
+        while tmovie.getTime() > 0:
+            if movie.status != visual.FINISHED:
+                movie.draw()
+                scrwin.flip()
+            else:
+                cross_hair.draw()
+                scrwin.flip()
 logging.exp("EXPERIMENT FINISHED")
 logging.exp("Done in {0:.2f}s".format(timer_exp.getTime()))
 logging.flush()
