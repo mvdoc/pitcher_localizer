@@ -6,7 +6,7 @@ from os.path import join as pjoin
 from glob import glob
 from random import shuffle, sample
 
-PWD = os.path.dirname(os.path.abspath(__file__))
+PWD = os.path.relpath(os.path.dirname(os.path.abspath(__file__)))
 
 
 def get_stimuli(stim_dir='stimuli'):
@@ -93,9 +93,11 @@ def out_fn(subid, nruns):
     return template.format(subid, nruns)
 
 
-def save_json(obj, fn):
+def save_json(obj, fn, overwrite=False):
+    if os.path.exists(fn) and not overwrite:
+        raise ValueError("{0} exists, not overwriting".format(fn))
     with open(fn, 'wb') as f:
-        json.dump(obj, f)
+        json.dump(obj, f, indent=True)
 
 
 def main():
@@ -104,10 +106,11 @@ def main():
     nruns = parsed.nruns
     stim_dir = parsed.stimdir
     out_dir = parsed.output
+    overwrite = parsed.overwrite
 
     stimuli = get_stimuli(stim_dir)
     exp = create_experiment(stimuli, nruns)
-    save_json(exp, pjoin(out_dir, out_fn(subid, nruns)))
+    save_json(exp, pjoin(out_dir, out_fn(subid, nruns)), overwrite)
 
 
 def parse_args():
@@ -122,7 +125,13 @@ def parse_args():
     parser.add_argument('--stimdir', '-d', type=str,
                         help='directory containing stimuli',
                         default=pjoin(PWD, 'stimuli'))
+    parser.add_argument('--overwrite', action='store_true',
+                        help='overwrite existing files?')
     parser.add_argument('--output', '-o', type=str,
                         help='output directory',
                         required=True)
     return parser.parse_args()
+
+
+if __name__ == '__main__':
+    main()
