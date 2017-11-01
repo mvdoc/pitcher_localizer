@@ -65,6 +65,10 @@ def create_run(stimuli):
     # randomize categories
     categories = sample(stimuli.keys(), len(stimuli))
     phases = ['fixation', categories, 'fixation', categories[::-1], 'fixation']
+    # make a copy and shuffle the stimuli
+    stimuli_ = stimuli.copy()
+    for stim in stimuli_:
+        shuffle(stimuli_[stim])
     run = []
     for ph in phases:
         if ph == 'fixation':
@@ -72,10 +76,10 @@ def create_run(stimuli):
         else:  # we have stimuli
             for cat in ph:
                 # these are the stimuli
-                stims = stimuli[cat]
-                # shuffle them
-                for stim in sample(stims, len(stims)):
-                    run.append(make_trial(cat, 1.5, stim))
+                stims = stimuli_[cat]
+                # we have 6 stimuli in each block
+                for _ in range(6):
+                    run.append(make_trial(cat, 6, stims.pop()))
     return run
 
 
@@ -89,7 +93,7 @@ def create_experiment(stimuli, nruns):
 
 
 def out_fn(subid, nruns):
-    template = 'sub-{0}_dynlocalizer_{1}runs.json'
+    template = 'sub-{0}_task-localizer_{1}runs.json'
     return template.format(subid, nruns)
 
 

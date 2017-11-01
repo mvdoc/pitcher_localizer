@@ -13,6 +13,8 @@ def test_create_run():
     stimuli = get_stimuli()
     run = create_run(stimuli)
     assert len(run) > 0
+    # check we don't touch stimuli
+    assert len(stimuli) > 0
 
     fixations = len(list(filter(lambda x: x['stim_type'] == 'fixation', run)))
     assert fixations == 3
@@ -40,4 +42,10 @@ def test_create_run():
     # we should have the blocks in "palindromic order"
     assert map(get_stim_type, blocks[0]) == map(get_stim_type, blocks[1][::-1])
     # but the individual trials should be different (shuffled)
-    assert map(get_stim_fn, blocks[0]) != map(get_stim_fn, blocks[1][::-1])
+    block0_stimfn = map(get_stim_fn, blocks[0])
+    block1_stimfn = map(get_stim_fn, blocks[1])
+    assert block0_stimfn != block1_stimfn[::-1]
+    # and also check that we have unique stimuli in each block
+    assert len(set(block0_stimfn).intersection(block1_stimfn)) == 0
+    # but same length
+    assert len(block0_stimfn) == len(block1_stimfn)
