@@ -1,0 +1,128 @@
+"""Make stimulus order for localizer"""
+import argparse
+import json
+import os
+from os.path import join as pjoin
+from glob import glob
+from random import shuffle, sample
+
+PWD = os.path.dirname(os.path.abspath(__file__))
+
+
+def get_stimuli(stim_dir='stimuli'):
+    """Returns a dictionary containing the stimuli for each category
+
+    Arguments
+    ---------
+    stim_dir : str
+        directory containing subdirectories with individual stimuli; the
+        name of the subdirectories will be the category name
+
+    Returns
+    -------
+    stimuli : dict
+        dictionary containing lists of stimuli for each category
+    """
+    stimuli = dict()
+    categories = glob(pjoin(stim_dir, '*'))
+    for cat in categories:
+        cat_ = os.path.basename(cat)
+        stimuli[cat_] = glob(pjoin(cat, '*'))
+    return stimuli
+
+
+def make_trial(stim_type, duration, stim_fn):
+    trial = {
+        'stim_type': stim_type,
+        'duration': duration,
+        'stim_fn': stim_fn
+    }
+    return trial
+
+
+def create_run(stimuli):
+    """Creates a single run according to Pitcher et al., 2011.
+    Each run consists of
+        - fixation (18s)
+        - randomized block of categories
+        - fixation (18s)
+        - inverted block of categories
+        - fixation (18s)
+
+    Arguments
+    ---------
+    stimuli : dict
+        dictionary containing lists of stimuli for each category
+
+    Returns
+    -------
+    run : list
+        each item in the list is a dictionary with the following keys
+            - stim_type : stimulus category
+            - duration : stimulus duration in s
+            - stim_fn : stimulus fn (if available)
+    """
+    # randomize categories
+    categories = sample(stimuli.keys(), len(stimuli))
+    phases = ['fixation', categories, 'fixation', categories[::-1], 'fixation']
+    run = []
+    for ph in phases:
+        if ph == 'fixation':
+            run.append(make_trial('fixation', 18, None))
+        else:  # we have stimuli
+            for cat in ph:
+                # these are the stimuli
+                stims = stimuli[cat]
+                # shuffle them
+                for stim in sample(stims, len(stims)):
+                    run.append(make_trial(cat, 1.5, stim))
+    return run
+
+
+def create_experiment(stimuli, nruns):
+    """Creates an experiment with nruns"""
+    experiment = dict()
+    for irun in range(nruns):
+        experiment[irun] = create_run(stimuli)
+
+    return experiment
+
+
+def out_fn(subid, nruns):
+    template = 'sub-{0}_dynlocalizer_{1}runs.json'
+    return template.format(subid, nruns)
+
+
+def save_json(obj, fn):
+    with open(fn, 'wb') as f:
+        json.dump(obj, f)
+
+
+def main():
+    parsed = parse_args()
+    subid = parsed.subid
+    nruns = parsed.nruns
+    stim_dir = parsed.stimdir
+    out_dir = parsed.output
+
+    stimuli = get_stimuli(stim_dir)
+    exp = create_experiment(stimuli, nruns)
+    save_json(exp, pjoin(out_dir, out_fn(subid, nruns)))
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--subid', '-s', type=str,
+                        help='subject id',
+                        required=True)
+    parser.add_argument('--nruns', '-n', type=int,
+                        help='number of runs',
+                        default=4)
+    parser.add_argument('--stimdir', '-d', type=str,
+                        help='directory containing stimuli',
+                        default=pjoin(PWD, 'stimuli'))
+    parser.add_argument('--output', '-o', type=str,
+                        help='output directory',
+                        required=True)
+    return parser.parse_args()
