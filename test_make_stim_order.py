@@ -12,10 +12,13 @@ def test_get_stimuli():
 def test_create_run():
     stimuli = get_stimuli()
     run = create_run(stimuli)
+    run2 = create_run(stimuli)
     assert len(run) > 0
     # check we don't touch stimuli
     for category, stim in stimuli.iteritems():
         assert len(stim) > 0, category
+    # check we don't get the same runs
+    assert run != run2
 
     fixations = len(list(filter(lambda x: x['stim_type'] == 'fixation', run)))
     assert fixations == 3
