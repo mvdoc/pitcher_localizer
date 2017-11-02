@@ -1,6 +1,7 @@
 """Test module for make_stim_order"""
 import pytest
-from .make_stim_order import get_stimuli, create_run
+from .make_stim_order import get_stimuli, create_run, \
+    inject_attention_check, create_experiment
 
 
 def test_get_stimuli():
@@ -53,3 +54,33 @@ def test_create_run():
     assert len(set(block0_stimfn).intersection(block1_stimfn)) == 0
     # but same length
     assert len(block0_stimfn) == len(block1_stimfn)
+
+
+def test_inject_attention_check():
+    stimuli = get_stimuli()
+    exp = create_experiment(stimuli, 4)
+    #  category across the runs.
+    exp_inj = inject_attention_check(exp)
+    exp_inj2 = inject_attention_check(exp)
+    assert exp != exp_inj
+    assert exp_inj != exp_inj2
+
+    check = dict()
+    for irun in sorted(exp_inj.keys()):
+        check_run = dict()
+        run = exp_inj[irun]
+        for itrial in range(1, len(run)):
+            trial = run[itrial]
+            prev_trial = run[itrial - 1]
+            if trial['stim_fn'] == prev_trial['stim_fn']:
+                cat = trial['stim_type']
+                check_run[cat] = check_run.get(cat, 0) + 1
+        check[irun] = check_run
+
+    for irun, check_run in check.iteritems():
+        assert sum(check_run.itervalues()) == 5, irun
+        assert list(check_run.itervalues()) == [1] * 5
+
+    for run in exp_inj.itervalues():
+        assert sum(map(lambda x: x.get('repetition', 0), run)) == 5
+

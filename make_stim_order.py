@@ -5,7 +5,8 @@ import json
 import os
 from os.path import join as pjoin
 from glob import glob
-from random import shuffle, sample
+import numpy as np
+from random import shuffle, sample, random
 
 PWD = os.path.relpath(os.path.dirname(os.path.abspath(__file__)))
 
@@ -93,6 +94,89 @@ def create_experiment(stimuli, nruns):
     return experiment
 
 
+def get_rand_categories(categories, n, count_categories):
+    """Returns a random sample of categories. If n > len(categories),
+    then all categories are returned plus some random categories. Also, if
+    count_categories is passed, the priority goes to those categories with
+    min(count_categories), in oder to counterbalance across runs."""
+    n_categories = len(categories)
+    idx_min_cat = np.where(count_categories == count_categories.min())[0]
+    if n <= len(idx_min_cat):
+        rand_idx_cat = sample(idx_min_cat, n)
+        sample_categories = [categories[i] for i in rand_idx_cat]
+        for i in rand_idx_cat:
+            count_categories[i] += 1
+        return sample_categories, count_categories
+    else:
+        # first fill with the minimum
+        sample_categories = [categories[i] for i in idx_min_cat]
+        for i in idx_min_cat:
+            count_categories[i] += 1
+        n_ = n - len(sample_categories)
+        # then fill with multiples of n_
+        for _ in range(n_ // n_categories):
+            sample_categories += categories
+            # add one to all categories
+            count_categories += 1
+        # finally fill the remainder
+        idx_sample_categories_ = sample(range(n_categories), n_ % n_categories)
+        for idx in idx_sample_categories_:
+            count_categories[idx] += 1
+        sample_categories += [categories[idx]
+                              for idx in idx_sample_categories_]
+        shuffle(sample_categories)
+        return sample_categories, count_categories
+
+
+def inject_attention_check(exp):
+    """Inject some repeated trials randomly throughout the experiment.
+
+    Arguments
+    ---------
+    exp : dict
+        the experiment
+    nchecks_run : int
+        how many checks for each run to inject. Must be even.
+
+    Returns
+    -------
+    exp_inj : dict
+        the experiment with injected trials
+    """
+    exp_ = deepcopy(exp)
+    # first we need to figure out how many categories we have. we assume
+    # that all runs have the same categories
+    run_idx = sorted(exp_.keys())
+    run1 = exp_[run_idx[0]]
+    categories = map(lambda x: x['stim_type'], run1)
+    categories = np.unique(filter(lambda x: x != 'fixation', categories))
+    n_categories = len(categories)
+    # we are going to arbitrarily choose a number of repetitions so that
+    # they're balanced across the experiment. it ends up by being a total of
+    # n_runs "catch trials" for each category
+    for run in exp_.itervalues():
+        categories_ = categories.copy()
+        shuffle(categories_)
+        # randomly split in two blocks
+        categories_ = [
+            categories_[:n_categories//2],
+            categories_[n_categories//2:]]
+        shuffle(categories_)
+        for check_cat, where_to_check in zip(
+                categories_,
+                (lambda x: 1 < x < len(run)//2, lambda x: x >= len(run)//2)):
+            for cat in check_cat:
+                idx_ok = np.where(map(lambda x: x['stim_type'] == cat, run))[0]
+                idx_ok = sorted(filter(where_to_check, idx_ok))
+                # also do not take the first trial because it's at the edge
+                # of two trial types
+                idx_ok = idx_ok[1:]
+                idx_check = sample(idx_ok, 1)[0]
+                run[idx_check] = run[idx_check - 1].copy()
+                run[idx_check]['repetition'] = 1
+    return exp_
+
+
 def out_fn(subid, nruns):
     template = 'sub-{0}_task-localizer_{1}runs.json'
     return template.format(subid, nruns)
@@ -118,6 +202,8 @@ def main():
 
     stimuli = get_stimuli(stim_dir)
     exp = create_experiment(stimuli, nruns)
+    # inject attention check?
+    exp = inject_attention_check(exp)
     save_json(exp, pjoin(out_dir, out_fn(subid, nruns)), overwrite)
 
 
