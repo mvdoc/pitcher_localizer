@@ -202,7 +202,7 @@ def main():
 
     stimuli = get_stimuli(stim_dir)
     exp = create_experiment(stimuli, nruns)
-    # inject attention check?
+    # inject attention check
     exp = inject_attention_check(exp)
     save_json(exp, pjoin(out_dir, out_fn(subid, nruns)), overwrite)
 

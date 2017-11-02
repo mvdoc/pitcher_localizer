@@ -155,8 +155,8 @@ for stim in stimuli:
         stim_fn = stim['stim_fn']
         print("Loading {0}".format(stim_fn))
         stimuli_clip[stim_fn] = \
-            visual.MovieStim3(scrwin, stim_fn, size=(1280, 940), name=stim_fn,
-                              noAudio=True)
+            visual.MovieStim3(scrwin, stim_fn, size=1280, name=stim_fn,
+                              noAudio=True, loop=True)
 
 scrwin.flip()
 cross_hair = visual.TextStim(scrwin, text='+', height=31,
@@ -202,44 +202,50 @@ else:
     ser = FakeSerial()
 
 # set up timer for experiment starting from first trigger
-logging.exp("EXPERIMENT STARTING")
 timer_exp = core.Clock()
 trunbegin = timer_exp.getTime()
 # setup bids log
-logbids("onset\tduration\tstim_type")
+logbids("onset\tduration\tstim_type\trepetition")
 # duration will be filled later
-template_bids = '{onset:.3f}\t{duration:.3f}\t{stim_type}\t{stim_fn}'
+template_bids = '{onset:.3f}\t{duration:.3f}\t{stim_type}\t{stim_fn}\t' \
+                '{repetition}'
 # and now we just loop through the trials
 for trial in stimuli:
     stim_type = trial['stim_type']
+    stim_fn = trial['stim_fn']
+    duration = trial['duration']
+    logbids(template_bids.format(
+        onset=timer_exp.getTime(),
+        duration=duration,
+        stim_type=stim_type,
+        stim_fn=stim_fn,
+        repetition=trial.get('repetition', 0)),
+    )
+    trial_counter = core.CountdownTimer(duration)
     if stim_type == 'fixation':
-        logbids(template_bids.format(
-            onset=timer_exp.getTime(),
-            duration=trial['duration'],
-            stim_type=stim_type,
-            stim_fn='n/a'))
         cross_hair.draw()
         scrwin.flip()
-        core.wait(trial['duration'])
+        logging.flush()
+        while trial_counter.getTime() > 0:
+            pass
     else:
-        stim_fn = trial['stim_fn']
         movie = stimuli_clip[stim_fn]
-        # if we have played it already
-        tmovie = core.CountdownTimer(trial['duration'])
-        logbids(template_bids.format(
-            onset=timer_exp.getTime(),
-            duration=trial['duration'],
-            stim_type=stim_type,
-            stim_fn=stim_fn
-        ))
-        while tmovie.getTime() > 0:
+        while trial_counter.getTime() > 0:
+            key = ser.read()
+            if key in ['1', '2']:
+                logbids(template_bids.format(
+                    onset=timer_exp.getTime(),
+                    duration=0.,
+                    stim_type='button_press',
+                    stim_fn=None,
+                    repetition=0)
+                )
             if movie.status != visual.FINISHED:
                 movie.draw()
                 scrwin.flip()
             else:
                 cross_hair.draw()
                 scrwin.flip()
-logging.exp("EXPERIMENT FINISHED")
 logging.exp("Done in {0:.2f}s".format(timer_exp.getTime()))
 logging.flush()
 scrwin.close()
