@@ -1,0 +1,7 @@
+{
+  "instructions":
+    "Pay attention to these clips",
+  "task_name": "localizer",
+  "log_template": "sub-{subj}_task-{task_name}_run-{runnr}_{timestamp}.txt",
+  "log_subjects": "subjectlog.tsv"
+}
