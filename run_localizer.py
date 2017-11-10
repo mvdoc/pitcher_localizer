@@ -12,7 +12,7 @@ from psychopy import sound, core
 import time as ptime
 import serial
 import os
-from os.path import join as pjoin, exists as pexists
+from os.path import join as pjoin, exists as pexists, abspath, dirname
 import json
 import csv
 import datetime
@@ -75,13 +75,15 @@ def load_subjectlog(fn):
     return lastinfo
 
 # set up some dirs
-STIMDIR = "stimuli"
-RESDIR = "res"
+HERE = abspath(dirname(__file__))
+STIMDIR = pjoin(HERE, "stimuli")
+RESDIR = pjoin(HERE, "res")
 if not pexists(RESDIR):
     os.makedirs(RESDIR)
 
 # load config
-with open('config.json', 'rb') as f:
+CONFIG_FN = pjoin(HERE, 'config.json')
+with open(CONFIG_FN, 'rb') as f:
     config = json.load(f)
 
 instructions = config['instructions']
@@ -119,8 +121,10 @@ def main(info):
     # create stimulus order if not existing
     if not os.path.exists(stim_json):
         logging.warning("Creating stimulus order for {0}".format(subj))
-        cmd = "python make_stim_order.py --subid {subj} --output {output} " \
-              "--nruns 4".format(subj=subj, output=os.path.dirname(stim_json))
+        MAKESTIMPY = pjoin(HERE, 'make_stim_order.py')
+        cmd = "python {cmd} --subid {subj} --output {output} " \
+              "--nruns 4".format(cmd=MAKESTIMPY, subj=subj,
+                                 output=dirname(stim_json))
         logging.warning("Running '{0}'".format(cmd))
         sp.check_call(cmd.split())
     with open(stim_json, 'rb') as f:
