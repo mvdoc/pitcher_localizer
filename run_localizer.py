@@ -98,7 +98,7 @@ def main(info):
     subj = info['subject_id']
     fullscr = info['fullscr']
     time = core.Clock()
-    subj_dir = pjoin(RESDIR, subj)
+    subj_dir = pjoin(RESDIR, 'sub-' + subj)
     if not pexists(subj_dir):
         os.makedirs(subj_dir)
     log_fn = config['log_template'].format(
