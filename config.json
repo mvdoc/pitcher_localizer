@@ -1,6 +1,6 @@
 {
   "instructions":
-    "Pay attention to these clips. Press the first (left) button whenever you see a repeated clip.",
+    "Pay attention to these clips.\nPress the first (left) button whenever you see a repeated clip.",
   "task_name": "localizer",
   "log_template": "sub-{subj}_task-{task_name}_run-{runnr}_{timestamp}.txt",
   "log_subjects": "subjectlog.tsv"

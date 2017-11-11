@@ -136,12 +136,7 @@ def main(info):
     tbegin = time.getTime()
     using_scanner = info['scanner?']
     # Setting up visual
-    if using_scanner:
-        size = [1280, 1024]
-        fullscr = fullscr
-    else:
-        size = [1024, 768]
-        fullscr = fullscr
+    size = [1280, 1024]
     scrwin = visual.Window(size=size,
                            allowGUI=False, units='pix',
                            screen=1, rgb=[-1, -1, -1],
@@ -171,7 +166,7 @@ def main(info):
     else:
         intro_msg = "Press Enter to start"
     intro_msg = instructions + '\n' + intro_msg
-    intro = visual.TextStim(scrwin, text=intro_msg, height=31)
+    intro = visual.TextStim(scrwin, text=intro_msg, height=31, wrapWidth=900)
     # Start of experiment
     intro.draw()
     scrwin.flip()
