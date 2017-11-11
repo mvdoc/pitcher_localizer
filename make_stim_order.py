@@ -3,12 +3,12 @@ import argparse
 from copy import deepcopy
 import json
 import os
-from os.path import join as pjoin
+from os.path import join as pjoin, relpath
 from glob import glob
 import numpy as np
 from random import shuffle, sample, random
 
-PWD = os.path.relpath(os.path.dirname(os.path.abspath(__file__)))
+PWD = os.path.dirname(os.path.abspath(__file__))
 
 
 def get_stimuli(stim_dir='stimuli'):
@@ -29,7 +29,8 @@ def get_stimuli(stim_dir='stimuli'):
     categories = glob(pjoin(stim_dir, '*'))
     for cat in categories:
         cat_ = os.path.basename(cat)
-        stimuli[cat_] = glob(pjoin(cat, '*'))
+        stimuli[cat_] = map(lambda x: relpath(x, start=PWD),
+                            glob(pjoin(cat, '*')))
     return stimuli
 
 

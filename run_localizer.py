@@ -19,6 +19,7 @@ import datetime
 import shutil
 import subprocess as sp
 
+PWD = os.path.dirname(os.path.abspath(__file__))
 # add a new level name called bids
 # we will use this level to log information that will be saved
 # in the _events.tsv file for this run
@@ -117,7 +118,8 @@ def main(info):
                          func_args=[log_fn],
                          name='quit experiment gracefully')
     # --- LOAD STIMULI ORDER FOR THIS PARTICIPANT ---
-    stim_json = pjoin('cfg', 'sub-{0}_task-localizer_4runs.json'.format(subj))
+    stim_json = pjoin(PWD, 'cfg',
+                      'sub-{0}_task-localizer_4runs.json'.format(subj))
     # create stimulus order if not existing
     if not os.path.exists(stim_json):
         logging.warning("Creating stimulus order for {0}".format(subj))
@@ -157,7 +159,8 @@ def main(info):
             stim_fn = stim['stim_fn']
             print("Loading {0}".format(stim_fn))
             stimuli_clip[stim_fn] = \
-                visual.MovieStim3(scrwin, stim_fn, size=(1280, 940),
+                visual.MovieStim3(scrwin, pjoin(PWD, stim_fn),
+                                  size=(1280, 940),
                                   name=stim_fn,
                                   noAudio=True, loop=True)
     scrwin.flip()
