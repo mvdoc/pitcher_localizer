@@ -90,7 +90,7 @@ def create_experiment(stimuli, nruns):
     """Creates an experiment with nruns"""
     experiment = dict()
     for irun in range(nruns):
-        experiment[irun] = create_run(stimuli)
+        experiment[irun + 1] = create_run(stimuli)
 
     return experiment
 
